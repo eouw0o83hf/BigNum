@@ -183,6 +183,16 @@ namespace BigNum.Tests
             Assert.That(num1.Add(num2), Is.EqualTo(expected));
         }
 
+        [Test]
+        public void Add_NegativeToNegative()
+        {
+            var num1 = new BigInt(-4912);
+            var num2 = new BigInt(-32942);
+            var expected = new BigInt(-37854);
+
+            Assert.That(num1.Add(num2), Is.EqualTo(expected));
+        }
+
         #endregion
     }
 }

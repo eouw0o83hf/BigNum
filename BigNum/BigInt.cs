@@ -85,17 +85,40 @@ namespace BigNum
 
         public BigInt Add(BigInt target)
         {
+            if (_negative)
+            {
+                if (!target._negative)
+                {
+                    return _subtractCore(target._bytes, _bytes, true);
+                }
+                return _addCore(_bytes, target._bytes, true);
+            }
+            
+            if (target._negative)
+            {
+                return _subtractCore(_bytes, target._bytes, false);
+            }
+            return _addCore(_bytes, target._bytes, false);
+        }
+
+        private static BigInt _subtractCore(byte[] minuend, byte[] subtrahend, bool outputIsNegative)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static BigInt _addCore(byte[] addend1, byte[] addend2, bool outputIsNegative)
+        {
             var accumulator = new List<byte>();
-            var max = Math.Max(_bytes.Length, target._bytes.Length);
+            var max = Math.Max(addend1.Length, addend2.Length);
 
             var carry = false;
             for (var i = 0; i < max; ++i)
             {
-                var input0 = _bytes.Length > i ? _bytes[i] : 0;
-                var input1 = target._bytes.Length > i ? target._bytes[i] : 0;
+                var input0 = addend1.Length > i ? addend1[i] : 0;
+                var input1 = addend2.Length > i ? addend2[i] : 0;
                 var input2 = carry ? 1 : 0;
 
-                var sum = (byte) (input0 + input1 + input2);
+                var sum = (byte)(input0 + input1 + input2);
 
                 carry = sum >= 10;
                 if (carry) sum -= 10;
@@ -108,7 +131,7 @@ namespace BigNum
                 accumulator.Add(1);
             }
 
-            return new BigInt(false, accumulator.ToArray());
+            return new BigInt(outputIsNegative, accumulator.ToArray());
         }
 
         #endregion
