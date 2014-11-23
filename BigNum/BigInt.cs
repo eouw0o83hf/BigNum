@@ -276,6 +276,16 @@ namespace BigNum
             return left.CompareTo(right) >= 0;
         }
 
+        public static BigInt operator +(BigInt left, BigInt right)
+        {
+            return left.Add(right);
+        }
+
+        public static BigInt operator -(BigInt left, BigInt right)
+        {
+            return left.Subtract(right);
+        }
+
         #endregion
     }
 }
