@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace BigNum
 {
-    public class BigInt
+    public class BigInt : IComparable
     {
         // Little-Endian BCDs
         private readonly byte[] _bytes;
@@ -29,8 +29,10 @@ namespace BigNum
                 input = -input;
             }
 
-            // We're storing BCDs in each array member
-            _bytes = new byte[(int)Math.Ceiling(Math.Log10(input))];
+            // We're storing BCDs in each array member.
+            // The "+0.01" is to take care of the Log edge case where the input is an
+            // exact Log10 match, and it bumps it up to the next size
+            _bytes = new byte[(int)Math.Ceiling(Math.Log10(input + .01))];
             for (var i = 0; input > 0; input /= 10, ++i)
             {
                 _bytes[i] = (byte)(input % 10);
@@ -77,6 +79,51 @@ namespace BigNum
             return ToString().GetHashCode();
         }
 
+        public int CompareTo(object obj)
+        {
+            // First: can we even compare these?
+            var bigInt = obj as BigInt;
+            if (bigInt == null) throw new ArgumentException("Argument must be non-null and explicitly convertible to BigInt", "obj");
+
+            // Second: can we just use the sign?
+            if (!_negative && bigInt._negative)
+            {
+                return 1;
+            }
+            if (_negative && !bigInt._negative)
+            {
+                return -1;
+            }
+
+            // Third: can we just use the length of the number?
+            if (_bytes.Length > bigInt._bytes.Length)
+            {
+                return _negative ? -1 : 1;
+            }
+            if (_bytes.Length < bigInt._bytes.Length)
+            {
+                return _negative ? 1 : -1;
+            }
+
+            // Fourth: compare number components
+            // Note at this point, the arrays are guaranteed to be the same length
+            // and the negative statuses are equivalent
+            for (var i = _bytes.Length - 1; i >= 0; --i)
+            {
+                if (_bytes[i] > bigInt._bytes[i])
+                {
+                    return _negative ? -1 : 1;
+                }
+                if (_bytes[i] < bigInt._bytes[i])
+                {
+                    return _negative ? 1 : -1;
+                }
+            }
+
+            // Fifth: No comparison remains. These numbers are equal
+            return 0;
+        }
+
         #endregion
 
         #region Arithmetic
@@ -106,6 +153,8 @@ namespace BigNum
 
         private static BigInt _subtractCore(IList<byte> minuend, IList<byte> subtrahend, bool outputIsNegative)
         {
+            // todo: if subtrahend > minuend, swap pointers and flip negative
+
             var accumulator = new List<byte>();
             var max = Math.Max(minuend.Count, subtrahend.Count);
 
