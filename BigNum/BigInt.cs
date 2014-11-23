@@ -11,7 +11,9 @@ namespace BigNum
         // Little-Endian BCDs
         private readonly byte[] _bytes;
         private readonly bool _negative;
-        
+
+        #region In, Out
+
         public BigInt(long input)
         {
             // Main edge case
@@ -52,5 +54,25 @@ namespace BigNum
             // Concat() instead of Union() because we need repeated digits to be preserved
             return new string(negativeSign.Concat(digits).ToArray());
         }
+
+        #endregion
+
+        #region Equivalence
+
+        public override bool Equals(object obj)
+        {
+            var bigInt = obj as BigInt;
+            if (bigInt == null) return false;
+
+            return _negative == bigInt._negative && _bytes.SequenceEqual(bigInt._bytes);
+        }
+
+        public override int GetHashCode()
+        {
+            // Naive approach, but this will probably only rarely get used
+            return ToString().GetHashCode();
+        }
+
+        #endregion
     }
 }
