@@ -39,6 +39,12 @@ namespace BigNum
             }
         }
 
+        private BigInt(bool negative, byte[] bytes)
+        {
+            _bytes = bytes;
+            _negative = negative;
+        }
+
         public override string ToString()
         {
             // Put a negative sign in the first position if we need it
@@ -71,6 +77,38 @@ namespace BigNum
         {
             // Naive approach, but this will probably only rarely get used
             return ToString().GetHashCode();
+        }
+
+        #endregion
+
+        #region Arithmetic
+
+        public BigInt Add(BigInt target)
+        {
+            var accumulator = new List<byte>();
+            var max = Math.Max(_bytes.Length, target._bytes.Length);
+
+            var carry = false;
+            for (var i = 0; i < max; ++i)
+            {
+                var input0 = _bytes.Length > i ? _bytes[i] : 0;
+                var input1 = target._bytes.Length > i ? target._bytes[i] : 0;
+                var input2 = carry ? 1 : 0;
+
+                var sum = (byte) (input0 + input1 + input2);
+
+                carry = sum >= 10;
+                if (carry) sum -= 10;
+
+                accumulator.Add(sum);
+            }
+
+            if (carry)
+            {
+                accumulator.Add(1);
+            }
+
+            return new BigInt(false, accumulator.ToArray());
         }
 
         #endregion

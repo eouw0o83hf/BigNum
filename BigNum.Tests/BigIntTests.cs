@@ -110,5 +110,79 @@ namespace BigNum.Tests
         }
 
         #endregion
+
+        #region Addition
+
+        [Test]
+        public void Add_Identity()
+        {
+            var num1 = new BigInt(0);
+            var num2 = new BigInt(812);
+            var expected = new BigInt(812);
+
+            Assert.That(num1.Add(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Add_ZeroAndZero()
+        {
+            var num1 = new BigInt(0);
+            var num2 = new BigInt(0);
+            var expected = new BigInt(0);
+
+            Assert.That(num1.Add(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Add_SingleDigits()
+        {
+            var num1 = new BigInt(3);
+            var num2 = new BigInt(5);
+            var expected = new BigInt(8);
+
+            Assert.That(num1.Add(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Add_CarryToNewDigit()
+        {
+            var num1 = new BigInt(8);
+            var num2 = new BigInt(5);
+            var expected = new BigInt(13);
+
+            Assert.That(num1.Add(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Add_JaggedDigits()
+        {
+            var num1 = new BigInt(13);
+            var num2 = new BigInt(5);
+            var expected = new BigInt(18);
+
+            Assert.That(num1.Add(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Add_MultipleCarry()
+        {
+            var num1 = new BigInt(987654321);
+            var num2 = new BigInt(123456789);
+            var expected = new BigInt(1111111110);
+
+            Assert.That(num1.Add(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Add_SomeCarrySomeDontJagged()
+        {
+            var num1 = new BigInt(84928);
+            var num2 = new BigInt(418011);
+            var expected = new BigInt(502939);
+
+            Assert.That(num1.Add(num2), Is.EqualTo(expected));
+        }
+
+        #endregion
     }
 }
