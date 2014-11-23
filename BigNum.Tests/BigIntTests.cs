@@ -194,5 +194,49 @@ namespace BigNum.Tests
         }
 
         #endregion
+
+        #region Subtraction
+
+        [Test]
+        public void Subtract_SingleDigitPositive()
+        {
+            var num1 = new BigInt(8);
+            var num2 = new BigInt(5);
+            var expected = new BigInt(3);
+
+            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Subtract_SimpleDoubleDigit()
+        {
+            var num1 = new BigInt(28);
+            var num2 = new BigInt(17);
+            var expected = new BigInt(11);
+
+            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Subtract_SimpleDoubleDigitCarry()
+        {
+            var num1 = new BigInt(28);
+            var num2 = new BigInt(9);
+            var expected = new BigInt(19);
+
+            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Subtract_BigCarryAndNoCarry()
+        {
+            var num1 = new BigInt(481932045);
+            var num2 = new BigInt(32940027);
+            var expected = new BigInt(448992018);
+
+            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        #endregion
     }
 }

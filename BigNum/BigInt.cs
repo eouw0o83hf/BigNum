@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BigNum
 {
@@ -101,21 +99,56 @@ namespace BigNum
             return _addCore(_bytes, target._bytes, false);
         }
 
-        private static BigInt _subtractCore(byte[] minuend, byte[] subtrahend, bool outputIsNegative)
+        public BigInt Subtract(BigInt target)
         {
-            throw new NotImplementedException();
+            return Add(new BigInt(!target._negative, target._bytes));
         }
 
-        private static BigInt _addCore(byte[] addend1, byte[] addend2, bool outputIsNegative)
+        private static BigInt _subtractCore(IList<byte> minuend, IList<byte> subtrahend, bool outputIsNegative)
         {
             var accumulator = new List<byte>();
-            var max = Math.Max(addend1.Length, addend2.Length);
+            var max = Math.Max(minuend.Count, subtrahend.Count);
 
             var carry = false;
             for (var i = 0; i < max; ++i)
             {
-                var input0 = addend1.Length > i ? addend1[i] : 0;
-                var input1 = addend2.Length > i ? addend2[i] : 0;
+                var input0 = minuend.Count > i ? minuend[i] : 0;
+                var input1 = subtrahend.Count > i ? subtrahend[i] : 0;
+                var input2 = carry ? 1 : 0;
+
+                var difference = input0 - input1 - input2;
+
+                carry = difference < 0;
+
+                if (carry)
+                {
+                    if (i < max - 1)
+                    {
+                        difference += 10;
+                    }
+                    else
+                    {
+                        difference = -difference;
+                        outputIsNegative = !outputIsNegative;
+                    }
+                }
+
+                accumulator.Add((byte)(difference));
+            }
+
+            return new BigInt(outputIsNegative, accumulator.ToArray());
+        }
+
+        private static BigInt _addCore(IList<byte> addend1, IList<byte> addend2, bool outputIsNegative)
+        {
+            var accumulator = new List<byte>();
+            var max = Math.Max(addend1.Count, addend2.Count);
+
+            var carry = false;
+            for (var i = 0; i < max; ++i)
+            {
+                var input0 = addend1.Count > i ? addend1[i] : 0;
+                var input1 = addend2.Count > i ? addend2[i] : 0;
                 var input2 = carry ? 1 : 0;
 
                 var sum = (byte)(input0 + input1 + input2);
