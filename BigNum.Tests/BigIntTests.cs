@@ -326,7 +326,7 @@ namespace BigNum.Tests
             Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
         }
 
-        [Test, ExpectedException]
+        [Test]
         public void Subtract_SimpleDoubleDigitNegative()
         {
             var num1 = new BigInt(17);
@@ -354,6 +354,58 @@ namespace BigNum.Tests
             var expected = new BigInt(448992018);
 
             Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Subtract_PositiveFromNegative()
+        {
+            var num1 = new BigInt(-58728);
+            var num2 = new BigInt(48);
+            var expected = new BigInt(-58776);
+
+            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Subtract_NegativeToPositive()
+        {
+            var num1 = new BigInt(-20);
+            var num2 = new BigInt(-34);
+            var expected = new BigInt(14);
+
+            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Subtract_PositiveToNegative()
+        {
+            var num1 = new BigInt(20);
+            var num2 = new BigInt(34);
+            var expected = new BigInt(-14);
+
+            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Subtract_Catchall()
+        {
+            var signs = new[] { -1, 1 };
+            for (var i = 0; i < 1000; ++i)
+            {
+                for (var j = 0; j < 100; ++j)
+                {
+                    foreach (var iSign in signs)
+                    {
+                        foreach (var jSign in signs)
+                        {
+                            var num1 = new BigInt(i * iSign);
+                            var num2 = new BigInt(j * jSign);
+                            var expected = new BigInt((i * iSign) - (j * jSign));
+                            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+                        }
+                    }
+                }
+            }
         }
 
         #endregion

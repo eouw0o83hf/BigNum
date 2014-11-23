@@ -42,6 +42,10 @@ namespace BigNum
         private BigInt(bool negative, byte[] bytes)
         {
             _bytes = bytes;
+            if (bytes.Length == 0 || (bytes.Length == 1 && bytes[0] == 0))
+            {
+                return;
+            }
             _negative = negative;
         }
 
@@ -95,28 +99,33 @@ namespace BigNum
                 return -1;
             }
 
+            return CompareTo(_bytes, bigInt._bytes, _negative);
+        }
+
+        private static int CompareTo(IList<byte> left, IList<byte> right, bool isNegative = false)
+        {
             // Third: can we just use the length of the number?
-            if (_bytes.Length > bigInt._bytes.Length)
+            if (left.Count > right.Count)
             {
-                return _negative ? -1 : 1;
+                return isNegative ? -1 : 1;
             }
-            if (_bytes.Length < bigInt._bytes.Length)
+            if (left.Count < right.Count)
             {
-                return _negative ? 1 : -1;
+                return isNegative ? 1 : -1;
             }
 
             // Fourth: compare number components
             // Note at this point, the arrays are guaranteed to be the same length
             // and the negative statuses are equivalent
-            for (var i = _bytes.Length - 1; i >= 0; --i)
+            for (var i = left.Count - 1; i >= 0; --i)
             {
-                if (_bytes[i] > bigInt._bytes[i])
+                if (left[i] > right[i])
                 {
-                    return _negative ? -1 : 1;
+                    return isNegative ? -1 : 1;
                 }
-                if (_bytes[i] < bigInt._bytes[i])
+                if (left[i] < right[i])
                 {
-                    return _negative ? 1 : -1;
+                    return isNegative ? 1 : -1;
                 }
             }
 
@@ -130,11 +139,16 @@ namespace BigNum
 
         public BigInt Add(BigInt target)
         {
+            // There are four cases here: one for each positive/negative combination.
+            // In the case where they match, we can just use a simple addition algorithm
+            // and handle the sign. If they don't match, we have to use a subtraction
+            // algorithm, which involves somewhat more complex sign handling.
+
             if (_negative)
             {
                 if (!target._negative)
                 {
-                    return _subtractCore(target._bytes, _bytes, true);
+                    return _subtractCore(_bytes, target._bytes, true);
                 }
                 return _addCore(_bytes, target._bytes, true);
             }
@@ -148,44 +162,8 @@ namespace BigNum
 
         public BigInt Subtract(BigInt target)
         {
+            // Subtraction is just negative addition
             return Add(new BigInt(!target._negative, target._bytes));
-        }
-
-        private static BigInt _subtractCore(IList<byte> minuend, IList<byte> subtrahend, bool outputIsNegative)
-        {
-            // todo: if subtrahend > minuend, swap pointers and flip negative
-
-            var accumulator = new List<byte>();
-            var max = Math.Max(minuend.Count, subtrahend.Count);
-
-            var carry = false;
-            for (var i = 0; i < max; ++i)
-            {
-                var input0 = minuend.Count > i ? minuend[i] : 0;
-                var input1 = subtrahend.Count > i ? subtrahend[i] : 0;
-                var input2 = carry ? 1 : 0;
-
-                var difference = input0 - input1 - input2;
-
-                carry = difference < 0;
-
-                if (carry)
-                {
-                    if (i < max - 1)
-                    {
-                        difference += 10;
-                    }
-                    else
-                    {
-                        difference = -difference;
-                        outputIsNegative = !outputIsNegative;
-                    }
-                }
-
-                accumulator.Add((byte)(difference));
-            }
-
-            return new BigInt(outputIsNegative, accumulator.ToArray());
         }
 
         private static BigInt _addCore(IList<byte> addend1, IList<byte> addend2, bool outputIsNegative)
@@ -196,12 +174,14 @@ namespace BigNum
             var carry = false;
             for (var i = 0; i < max; ++i)
             {
+                // Sum up each addend and the carry, if appropriate
                 var input0 = addend1.Count > i ? addend1[i] : 0;
                 var input1 = addend2.Count > i ? addend2[i] : 0;
                 var input2 = carry ? 1 : 0;
 
                 var sum = (byte)(input0 + input1 + input2);
 
+                // Handle each number and carry
                 carry = sum >= 10;
                 if (carry) sum -= 10;
 
@@ -214,6 +194,86 @@ namespace BigNum
             }
 
             return new BigInt(outputIsNegative, accumulator.ToArray());
+        }
+
+        private static BigInt _subtractCore(IList<byte> minuend, IList<byte> subtrahend, bool outputIsNegative)
+        {
+            // We need to assert that the larger argument is first
+            if(CompareTo(minuend, subtrahend) < 0)
+            {
+                var temp = minuend;
+                minuend = subtrahend;
+                subtrahend = temp;
+                outputIsNegative = !outputIsNegative;
+            }
+
+            var accumulator = new List<byte>();
+            var max = Math.Max(minuend.Count, subtrahend.Count);
+
+            var carry = false;
+            for (var i = 0; i < max; ++i)
+            {
+                // This is the inverse of addition, just subtract all the components
+                var input0 = minuend.Count > i ? minuend[i] : 0;
+                var input1 = subtrahend.Count > i ? subtrahend[i] : 0;
+                var input2 = carry ? 1 : 0;
+
+                var difference = input0 - input1 - input2;
+
+                carry = difference < 0;
+
+                // The trick is that a carry is handled differently if it's
+                // the end of the number or a middle case
+                if (carry)
+                {
+                    if (i < max - 1)
+                    {
+                        // If it's the middle, just carry from the next diigt
+                        difference += 10;
+                    }
+                    else
+                    {
+                        // If it's at the end, we've run off the edge of the number
+                        // and we need to flip the sign
+                        difference = -difference;
+                        outputIsNegative = !outputIsNegative;
+                    }
+                }
+
+                accumulator.Add((byte)(difference));
+            }
+
+            while (accumulator.Last() == 0 && accumulator.Count > 1)
+            {
+                accumulator.RemoveAt(accumulator.Count - 1);
+            }
+
+            // Any sign flipping has been handled and we're good to go
+            return new BigInt(outputIsNegative, accumulator.ToArray());
+        }
+
+        #endregion
+
+        #region Operators
+
+        public static bool operator <(BigInt left, BigInt right)
+        {
+            return left.CompareTo(right) < 0;
+        }
+
+        public static bool operator >(BigInt left, BigInt right)
+        {
+            return left.CompareTo(right) > 0;
+        }
+
+        public static bool operator <=(BigInt left, BigInt right)
+        {
+            return left.CompareTo(right) <= 0;
+        }
+
+        public static bool operator >=(BigInt left, BigInt right)
+        {
+            return left.CompareTo(right) >= 0;
         }
 
         #endregion
