@@ -20,6 +20,13 @@ namespace BigNum.Tests
         }
 
         [Test]
+        public void Initialize_LogEdgeCase()
+        {
+            var sut = new BigInt(10);
+            Assert.That(sut.ToString(), Is.EqualTo("10"));
+        }
+
+        [Test]
         public void InitializeAndString_SeveralDigits()
         {
             var sut = new BigInt(8429750293);
@@ -111,6 +118,98 @@ namespace BigNum.Tests
 
         #endregion
 
+        #region Comparison
+
+        [Test]
+        public void CompareTo_NonBigInt()
+        {
+            var num1 = new BigInt(0);
+            var num2 = DateTime.Now;
+            Assert.Throws<ArgumentException>(() => num1.CompareTo(num2));
+        }
+
+        [Test]
+        public void CompareTo_Sign_Positive()
+        {
+            var num1 = new BigInt(5);
+            var num2 = new BigInt(-5);
+            Assert.That(num1.CompareTo(num2), Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void CompareTo_Sign_Negative()
+        {
+            var num1 = new BigInt(-5);
+            var num2 = new BigInt(5);
+            Assert.That(num1.CompareTo(num2), Is.LessThan(0));
+        }
+
+        [Test]
+        public void CompareTo_Length_Shorter_Positive()
+        {
+            var num1 = new BigInt(100);
+            var num2 = new BigInt(90);
+            Assert.That(num1.CompareTo(num2), Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void CompareTo_Length_Shorter_Negative()
+        {
+            var num1 = new BigInt(-100);
+            var num2 = new BigInt(-90);
+            Assert.That(num1.CompareTo(num2), Is.LessThan(0));
+        }
+
+        [Test]
+        public void CompareTo_Length_Longer_Positive()
+        {
+            var num1 = new BigInt(90);
+            var num2 = new BigInt(100);
+            Assert.That(num1.CompareTo(num2), Is.LessThan(0));
+        }
+
+        [Test]
+        public void CompareTo_Length_Longer_Negative()
+        {
+            var num1 = new BigInt(-90);
+            var num2 = new BigInt(-100);
+            Assert.That(num1.CompareTo(num2), Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void CompareTo_Value_Greater_Positive()
+        {
+            var num1 = new BigInt(4823);
+            var num2 = new BigInt(4803);
+            Assert.That(num1.CompareTo(num2), Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void CompareTo_Value_Greater_Negative()
+        {
+            var num1 = new BigInt(-4803);
+            var num2 = new BigInt(-4823);
+            Assert.That(num1.CompareTo(num2), Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void Compareto_Value_Less_Positive()
+        {
+            var num1 = new BigInt(4803);
+            var num2 = new BigInt(4823);
+            Assert.That(num1.CompareTo(num2), Is.LessThan(0));
+        }
+
+        [Test]
+        public void Compareto_Value_Less_Negative()
+        {
+            var num1 = new BigInt(-4823);
+            var num2 = new BigInt(-4803);
+            Assert.That(num1.CompareTo(num2), Is.LessThan(0));
+        }
+
+        #endregion
+
         #region Addition
 
         [Test]
@@ -181,6 +280,132 @@ namespace BigNum.Tests
             var expected = new BigInt(502939);
 
             Assert.That(num1.Add(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Add_NegativeToNegative()
+        {
+            var num1 = new BigInt(-4912);
+            var num2 = new BigInt(-32942);
+            var expected = new BigInt(-37854);
+
+            Assert.That(num1.Add(num2), Is.EqualTo(expected));
+        }
+
+        #endregion
+
+        #region Subtraction
+
+        [Test]
+        public void Subtract_SingleDigitPositive()
+        {
+            var num1 = new BigInt(8);
+            var num2 = new BigInt(5);
+            var expected = new BigInt(3);
+
+            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Subtract_SingleDigitToNegative()
+        {
+            var num1 = new BigInt(5);
+            var num2 = new BigInt(8);
+            var expected = new BigInt(-3);
+
+            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Subtract_SimpleDoubleDigit()
+        {
+            var num1 = new BigInt(28);
+            var num2 = new BigInt(17);
+            var expected = new BigInt(11);
+
+            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Subtract_SimpleDoubleDigitNegative()
+        {
+            var num1 = new BigInt(17);
+            var num2 = new BigInt(28);
+            var expected = new BigInt(-11);
+
+            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Subtract_SimpleDoubleDigitCarry()
+        {
+            var num1 = new BigInt(28);
+            var num2 = new BigInt(9);
+            var expected = new BigInt(19);
+
+            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Subtract_BigCarryAndNoCarry()
+        {
+            var num1 = new BigInt(481932045);
+            var num2 = new BigInt(32940027);
+            var expected = new BigInt(448992018);
+
+            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Subtract_PositiveFromNegative()
+        {
+            var num1 = new BigInt(-58728);
+            var num2 = new BigInt(48);
+            var expected = new BigInt(-58776);
+
+            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Subtract_NegativeToPositive()
+        {
+            var num1 = new BigInt(-20);
+            var num2 = new BigInt(-34);
+            var expected = new BigInt(14);
+
+            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Subtract_PositiveToNegative()
+        {
+            var num1 = new BigInt(20);
+            var num2 = new BigInt(34);
+            var expected = new BigInt(-14);
+
+            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Subtract_Catchall()
+        {
+            var signs = new[] { -1, 1 };
+            for (var i = 0; i < 1000; ++i)
+            {
+                for (var j = 0; j < 100; ++j)
+                {
+                    foreach (var iSign in signs)
+                    {
+                        foreach (var jSign in signs)
+                        {
+                            var num1 = new BigInt(i * iSign);
+                            var num2 = new BigInt(j * jSign);
+                            var expected = new BigInt((i * iSign) - (j * jSign));
+                            Assert.That(num1.Subtract(num2), Is.EqualTo(expected));
+                        }
+                    }
+                }
+            }
         }
 
         #endregion
