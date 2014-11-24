@@ -9,9 +9,13 @@ namespace BigNum
     /// </summary>
     public class BigInt : IComparable
     {
+        #region Immutable State
+
         // Little-Endian BCDs
         private readonly byte[] _bytes;
         private readonly bool _negative;
+
+        #endregion
 
         #region In, Out
 
@@ -309,6 +313,16 @@ namespace BigNum
             return new BigInt(_negative ^ target._negative, bytes.ToArray());
         }
 
+        public BigInt Divide(BigInt target)
+        {
+            if (target > this)
+            {
+                return new BigInt(0);
+            }
+
+            throw new NotImplementedException();
+        }
+
         #endregion
 
         #region Operators
@@ -346,6 +360,11 @@ namespace BigNum
         public static BigInt operator *(BigInt left, BigInt right)
         {
             return left.Multiply(right);
+        }
+
+        public static BigInt operator /(BigInt left, BigInt right)
+        {
+            return left.Divide(right);
         }
 
         #endregion

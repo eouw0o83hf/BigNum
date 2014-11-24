@@ -538,5 +538,18 @@ namespace BigNum.Tests
         }
 
         #endregion
+
+        #region Division
+
+        [Test]
+        public void Division_RightGreater_Zero()
+        {
+            var num1 = new BigInt(582039);
+            var num2 = new BigInt(4802580293);
+            var expected = new BigInt(0);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        #endregion
     }
 }
