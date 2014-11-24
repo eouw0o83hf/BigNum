@@ -573,6 +573,60 @@ namespace BigNum.Tests
             Assert.That(num1 / num1, Is.EqualTo(BigInt.One));
         }
 
+        [Test]
+        public void Division_RightOne_Identity_RightNegative()
+        {
+            var num1 = new BigInt(4802394);
+            var num2 = new BigInt(-1);
+            var expected = new BigInt(-4802394);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_BySameValue_One_RightNegative()
+        {
+            var num1 = new BigInt(4802394);
+            var num2 = new BigInt(-4802394);
+            var expected = new BigInt(-1);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_RightOne_Identity_LeftNegative()
+        {
+            var num1 = new BigInt(-4802394);
+            var num2 = new BigInt(1);
+            var expected = new BigInt(-4802394);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_BySameValue_One_LeftNegative()
+        {
+            var num1 = new BigInt(-4802394);
+            var num2 = new BigInt(4802394);
+            var expected = new BigInt(-1);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_RightOne_Identity_BothNegative()
+        {
+            var num1 = new BigInt(-4802394);
+            var num2 = new BigInt(-1);
+            var expected = new BigInt(4802394);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_BySameValue_One_BothNegative()
+        {
+            var num1 = new BigInt(-4802394);
+            var num2 = new BigInt(-4802394);
+            var expected = new BigInt(1);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
         #endregion
     }
 }

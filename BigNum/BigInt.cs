@@ -320,22 +320,32 @@ namespace BigNum
                 throw new DivideByZeroException();
             }
 
-            if (target > this)
+            if (CompareTo(_bytes, target._bytes) < 0)
             {
                 return Zero;
             }
 
-            if (target.Equals(One))
+            var outputSign = target._negative ? !_negative : _negative;
+
+            if (target._bytes.SequenceEqual(One._bytes))
             {
-                return this;
+                return new BigInt(outputSign, _bytes);
             }
 
-            if (target.Equals(this))
+            if (target._bytes.SequenceEqual(_bytes))
             {
-                return One;
+                return new BigInt(outputSign, One._bytes);
             }
 
+            // At this point, the numerator is greater than the denominator and the
+            // denominator is not 0. Since division relies on most-significant figure
+            // first, we'll be working in reverse of the normal procedures.
+            var bigEndianOutputList = new List<byte>();
+           
             throw new NotImplementedException();
+
+            bigEndianOutputList.Reverse();
+            return new BigInt(outputSign, bigEndianOutputList.ToArray());
         }
 
         #endregion
