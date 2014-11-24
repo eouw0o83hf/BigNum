@@ -4,6 +4,9 @@ using System.Linq;
 
 namespace BigNum
 {
+    /// <summary>
+    /// A straightforward, immutable, arbitrarily-sized integer
+    /// </summary>
     public class BigInt : IComparable
     {
         // Little-Endian BCDs
@@ -37,6 +40,30 @@ namespace BigNum
             {
                 _bytes[i] = (byte)(input % 10);
             }
+        }
+
+        public BigInt(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                throw new ArgumentException("Input cannot be empty", "input");
+            }
+
+            if (input[0] == '-')
+            {
+                _negative = true;
+                input = input.Substring(1);
+            }
+
+            if (!input.All(char.IsDigit))
+            {
+                throw new ArgumentException("Input must contain only numeric characters", "input");
+            }
+
+            _bytes = input
+                        .Select(a => (byte) (a - '0'))  // Easy char conversion
+                        .Reverse()                      // Little-endian
+                        .ToArray();
         }
 
         private BigInt(bool negative, byte[] bytes)
@@ -135,7 +162,7 @@ namespace BigNum
 
         #endregion
 
-        #region Arithmetic
+        #region Add/Subtract
 
         public BigInt Add(BigInt target)
         {
@@ -254,6 +281,36 @@ namespace BigNum
 
         #endregion
 
+        #region Multiplication/Divison
+
+        public BigInt Multiply(BigInt target)
+        {
+            var bytes = new List<byte>();
+
+            for (var i = 0; i < _bytes.Length; ++i)
+            {
+                for (var j = 0; j < target._bytes.Length; ++j)
+                {
+                    while (bytes.Count < i + j + 1) bytes.Add(0);
+
+                    var product = _bytes[i] * target._bytes[j];
+
+                    for (var k = 0; product > 0; product /= 10, ++k)
+                    {
+                        while (bytes.Count < i + j + k + 1) bytes.Add(0);
+                        product += bytes[i + j + k];
+                        bytes[i + j + k] = (byte)(product % 10);
+                    }
+                }
+            }
+
+            while (bytes.Last() == 0) bytes.RemoveAt(bytes.Count);
+
+            return new BigInt(_negative ^ target._negative, bytes.ToArray());
+        }
+
+        #endregion
+
         #region Operators
 
         public static bool operator <(BigInt left, BigInt right)
@@ -284,6 +341,11 @@ namespace BigNum
         public static BigInt operator -(BigInt left, BigInt right)
         {
             return left.Subtract(right);
+        }
+
+        public static BigInt operator *(BigInt left, BigInt right)
+        {
+            return left.Multiply(right);
         }
 
         #endregion

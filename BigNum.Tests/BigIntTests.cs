@@ -40,6 +40,33 @@ namespace BigNum.Tests
             Assert.That(sut.ToString(), Is.EqualTo("-38202430"));
         }
 
+        [Test]
+        public void InitializeFromString_Invalid()
+        {
+            Assert.Throws<ArgumentException>(() => new BigInt("-42803rjfoiew"));
+        }
+
+        [Test]
+        public void InitializeFromString_HandlesNegative()
+        {
+            var num = new BigInt("-40");
+            Assert.That(num.ToString(), Is.EqualTo("-40"));
+        }
+
+        [Test]
+        public void InitializeFromString_BiggerThanLong_Positive()
+        {
+            var num = new BigInt("48025029359374092839702839709283029835823023058319294");
+            Assert.That(num.ToString(), Is.EqualTo("48025029359374092839702839709283029835823023058319294"));
+        }
+
+        [Test]
+        public void InitializeFromString_BiggerThanLong_Negative()
+        {
+            var num = new BigInt("-48025029359374092839702839709283029835823023058319294");
+            Assert.That(num.ToString(), Is.EqualTo("-48025029359374092839702839709283029835823023058319294"));
+        }
+
         #endregion
 
         #region Equivalence
@@ -292,6 +319,15 @@ namespace BigNum.Tests
             Assert.That(num1.Add(num2), Is.EqualTo(expected));
         }
 
+        [Test]
+        public void Add_BiggerThanLong()
+        {
+            var num1 = new BigInt("48025029359374092839702839709283029835823023058319294");
+            var num2 = new BigInt("10000000000000000000000000000000000000000000000000001");
+            var expected = new BigInt("58025029359374092839702839709283029835823023058319295");
+            Assert.That(num1 + num2, Is.EqualTo(expected));
+        }
+
         #endregion
 
         #region Subtraction
@@ -406,6 +442,99 @@ namespace BigNum.Tests
                     }
                 }
             }
+        }
+
+        #endregion
+
+        #region Multiplication
+
+        [Test]
+        public void Multiplication_SingleDigit()
+        {
+            var num1 = new BigInt(2);
+            var num2 = new BigInt(4);
+            var expected = new BigInt(8);
+            Assert.That(num1.Multiply(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Multiplication_SingleDigit_LeftNegative()
+        {
+            var num1 = new BigInt(-2);
+            var num2 = new BigInt(4);
+            var expected = new BigInt(-8);
+            Assert.That(num1.Multiply(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Multiplication_SingleDigit_RightNegative()
+        {
+            var num1 = new BigInt(2);
+            var num2 = new BigInt(-4);
+            var expected = new BigInt(-8);
+            Assert.That(num1.Multiply(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Multiplication_SingleDigit_BothNegative()
+        {
+            var num1 = new BigInt(-2);
+            var num2 = new BigInt(-4);
+            var expected = new BigInt(8);
+            Assert.That(num1.Multiply(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Multiplication_JaggedTwoDigit()
+        {
+            var num1 = new BigInt(12);
+            var num2 = new BigInt(7);
+            var expected = new BigInt(84);
+            Assert.That(num1.Multiply(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Multiplication_TwoDigit()
+        {
+            var num1 = new BigInt(12);
+            var num2 = new BigInt(12);
+            var expected = new BigInt(144);
+            Assert.That(num1.Multiply(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Multiplication_ThreeDigit()
+        {
+            var num1 = new BigInt(482);
+            var num2 = new BigInt(976);
+            var expected = new BigInt(470432);
+            Assert.That(num1.Multiply(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Multiplication_BiggerThanLong()
+        {
+            var num1 = new BigInt(9223372036854775806);
+            var num2 = new BigInt(9223372036854775806);
+            var expected = new BigInt("85070591730234615828950163710522949636");
+            Assert.That(num1 * num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Multiplication_OutrageouslyLong()
+        {
+            var num1 = new BigInt("85070591730234615828950163710522949636");
+            var expected = new BigInt("7237005577332262207696084827656313479035278819920499616848843295441792532496");
+            Assert.That(num1 * num1, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Multiplication_OutrageouslyLongAndJagged()
+        {
+            var num1 = new BigInt("85070591730234615828950163710522949636");
+            var num2 = new BigInt("7237005577332262207696084827656313479035278819920499616848843295441792532496");
+            var expected = new BigInt("615656346818663736890864863094402685240458120927376293923527047632440653142966908917270607696787020784216301371456");
+            Assert.That(num1 * num2, Is.EqualTo(expected));
         }
 
         #endregion
