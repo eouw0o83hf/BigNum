@@ -550,6 +550,29 @@ namespace BigNum.Tests
             Assert.That(num1 / num2, Is.EqualTo(expected));
         }
 
+        [Test]
+        public void Division_RightZero_Exception()
+        {
+            var num1 = new BigInt(48023);
+            var num2 = new BigInt(0);
+            Assert.Throws<DivideByZeroException>(() => num1.Divide(num2));
+        }
+
+        [Test]
+        public void Division_RightOne_Identity()
+        {
+            var num1 = new BigInt(4802394);
+            var num2 = new BigInt(1);
+            Assert.That(num1 / num2, Is.EqualTo(num1));
+        }
+
+        [Test]
+        public void Division_BySameValue_One()
+        {
+            var num1 = new BigInt(4802394);
+            Assert.That(num1 / num1, Is.EqualTo(BigInt.One));
+        }
+
         #endregion
     }
 }

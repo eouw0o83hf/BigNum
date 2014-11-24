@@ -315,9 +315,24 @@ namespace BigNum
 
         public BigInt Divide(BigInt target)
         {
+            if (target.Equals(Zero))
+            {
+                throw new DivideByZeroException();
+            }
+
             if (target > this)
             {
-                return new BigInt(0);
+                return Zero;
+            }
+
+            if (target.Equals(One))
+            {
+                return this;
+            }
+
+            if (target.Equals(this))
+            {
+                return One;
             }
 
             throw new NotImplementedException();
@@ -366,6 +381,13 @@ namespace BigNum
         {
             return left.Divide(right);
         }
+
+        #endregion
+
+        #region Absolutes
+
+        public static readonly BigInt Zero = new BigInt(0);
+        public static readonly BigInt One = new BigInt(1);
 
         #endregion
     }
