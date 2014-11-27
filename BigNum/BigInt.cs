@@ -315,23 +315,33 @@ namespace BigNum
 
         public BigInt Divide(BigInt target)
         {
+            // Here's the tough one. There are two main phases: edge cases and actual division.
+
+            // 1: Handle all of the edge cases
+
+            // Divide by 0
             if (target.Equals(Zero))
             {
                 throw new DivideByZeroException();
             }
 
+            // Denominator > Numerator
             if (CompareTo(_bytes, target._bytes) < 0)
             {
                 return Zero;
             }
 
+            // At this point we need to start caring about signs since
+            // the output will be signed
             var outputSign = target._negative ? !_negative : _negative;
 
+            // Divide by 1
             if (target._bytes.SequenceEqual(One._bytes))
             {
                 return new BigInt(outputSign, _bytes);
             }
 
+            // Divide by Self
             if (target._bytes.SequenceEqual(_bytes))
             {
                 return new BigInt(outputSign, One._bytes);
@@ -341,11 +351,35 @@ namespace BigNum
             // denominator is not 0. Since division relies on most-significant figure
             // first, we'll be working in reverse of the normal procedures.
             var bigEndianOutputList = new List<byte>();
-           
-            throw new NotImplementedException();
 
-            bigEndianOutputList.Reverse();
-            return new BigInt(outputSign, bigEndianOutputList.ToArray());
+            // This is going to get modified as we go along - as long division, instead
+            // of trailing down and down, we're doing in-place replacements so that
+            // we just keep pulling out the divided amount every time a quotient component
+            // is determined. This is little-endian like the inputs.
+            var accumulator = target._bytes.ToList();
+
+            // Since we're in-place transforming the accumulator, we just have to keep
+            // dividing out of it until the accumulator's value is less than the denom-
+            // inator. At this point, we have a remainder and, since this is a simple
+            // big int, it will be discarded.
+            while (CompareTo(accumulator, target._bytes) > 0)
+            {
+
+            }
+            
+            var finalOutput = bigEndianOutputList
+                                    // Right now it's big-endian, so leading zeros are discarded
+                                    // befor ethe little-endian conversion
+                                .SkipWhile(a => a == 0)
+                                    // If the result is 0, we'll have an empty set. We need an
+                                    // explicit 0 value though, so supply that
+                                .DefaultIfEmpty((byte)0)
+                                    // Switch to little endian for the response
+                                .Reverse()
+                                    // For the response object
+                                .ToArray();
+
+            return new BigInt(outputSign, finalOutput);
         }
 
         #endregion
