@@ -289,15 +289,23 @@ namespace BigNum
 
         public BigInt Multiply(BigInt target)
         {
+            return new BigInt(_negative ^ target._negative, _multiplyCore(_bytes, target._bytes));
+        }
+
+        /// <summary>
+        /// Simple unsigned byte-wise multiplication of two byte arrays
+        /// </summary>
+        private static byte[] _multiplyCore(IList<byte> left, IList<byte> right)
+        {
             var bytes = new List<byte>();
 
-            for (var i = 0; i < _bytes.Length; ++i)
+            for (var i = 0; i < left.Count; ++i)
             {
-                for (var j = 0; j < target._bytes.Length; ++j)
+                for (var j = 0; j < right.Count; ++j)
                 {
                     while (bytes.Count < i + j + 1) bytes.Add(0);
 
-                    var product = _bytes[i] * target._bytes[j];
+                    var product = left[i] * right[j];
 
                     for (var k = 0; product > 0; product /= 10, ++k)
                     {
@@ -308,9 +316,13 @@ namespace BigNum
                 }
             }
 
-            while (bytes.Last() == 0) bytes.RemoveAt(bytes.Count);
-
-            return new BigInt(_negative ^ target._negative, bytes.ToArray());
+            // Remove any leading zeros
+            return bytes
+                .AsEnumerable()
+                .Reverse()
+                .SkipWhile(a => a == 0)
+                .Reverse()
+                .ToArray();
         }
 
         public BigInt Divide(BigInt target)
@@ -356,15 +368,50 @@ namespace BigNum
             // of trailing down and down, we're doing in-place replacements so that
             // we just keep pulling out the divided amount every time a quotient component
             // is determined. This is little-endian like the inputs.
-            var accumulator = target._bytes.ToList();
+            var accumulator = _bytes;
 
-            // Since we're in-place transforming the accumulator, we just have to keep
-            // dividing out of it until the accumulator's value is less than the denom-
-            // inator. At this point, we have a remainder and, since this is a simple
-            // big int, it will be discarded.
-            while (CompareTo(accumulator, target._bytes) > 0)
+            // Since we can only ever have 10 outputs, we can just enumerate them
+            // and then lookup against this mapping instead of re-multiplying every time.
+            // We'll still be doing modifications and comparisons, but this is the
+            // expensive bit.
+            var quotientMemo = Enumerable
+                .Range(0, 9)
+                // Saving this off as an anonymously-typed list so it can be given
+                // a guaranteed, static order
+                .OrderByDescending(a => a)
+                .Select(a => new
+                    {
+                        QuotientComponent = (byte)a,
+                        Value = _multiplyCore(target._bytes, new[] { (byte) a })
+                    })
+                .ToList();
+
+            // Work our way across the numerator, dividing out components from the
+            // denominator at every digit. There are some initial edge cases that
+            // we could skip with cleverness, but cleverness is not the exercise
+            for (var i = 0; i < _bytes.Length; ++i)
             {
+                // Run through all of the possible component quotients and
+                // quit as soon as one of them works
+                foreach (var q in quotientMemo)
+                {
+                    // The concept here is to add zeros to the result (which is akin to
+                    // placing the multiplied value in the lefmost position during long
+                    // division on paper) and see if it's less than or equal to the value
+                    // in the accumulator (which is akin to the current bottom-most sub-
+                    // total in long division). If it's not, then the quotient component
+                    // is too high. If it is, then it's our current match and gets applied
+                    var subtractor = Enumerable.Repeat((byte) 0, _bytes.Length - i - 1).Union(q.Value).ToArray();
 
+                    if (CompareTo(subtractor, accumulator) <= 0)
+                    {
+                        bigEndianOutputList.Add(q.QuotientComponent);
+                        // Make sure to update the accumulator's state by subtracting out
+                        // the value we just arrived at
+                        accumulator = _subtractCore(accumulator, subtractor, false)._bytes;
+                        break;
+                    }
+                }
             }
             
             var finalOutput = bigEndianOutputList
