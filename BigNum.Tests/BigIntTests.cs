@@ -538,5 +538,166 @@ namespace BigNum.Tests
         }
 
         #endregion
+
+        #region Division
+
+        #region Edge Cases
+
+        [Test]
+        public void Division_RightGreater_Zero()
+        {
+            var num1 = new BigInt(582039);
+            var num2 = new BigInt(4802580293);
+            var expected = new BigInt(0);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_RightZero_Exception()
+        {
+            var num1 = new BigInt(48023);
+            var num2 = new BigInt(0);
+            Assert.Throws<DivideByZeroException>(() => num1.Divide(num2));
+        }
+
+        [Test]
+        public void Division_RightOne_Identity()
+        {
+            var num1 = new BigInt(4802394);
+            var num2 = new BigInt(1);
+            Assert.That(num1 / num2, Is.EqualTo(num1));
+        }
+
+        [Test]
+        public void Division_BySameValue_One()
+        {
+            var num1 = new BigInt(4802394);
+            Assert.That(num1 / num1, Is.EqualTo(BigInt.One));
+        }
+
+        [Test]
+        public void Division_RightOne_Identity_RightNegative()
+        {
+            var num1 = new BigInt(4802394);
+            var num2 = new BigInt(-1);
+            var expected = new BigInt(-4802394);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_BySameValue_One_RightNegative()
+        {
+            var num1 = new BigInt(4802394);
+            var num2 = new BigInt(-4802394);
+            var expected = new BigInt(-1);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_RightOne_Identity_LeftNegative()
+        {
+            var num1 = new BigInt(-4802394);
+            var num2 = new BigInt(1);
+            var expected = new BigInt(-4802394);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_BySameValue_One_LeftNegative()
+        {
+            var num1 = new BigInt(-4802394);
+            var num2 = new BigInt(4802394);
+            var expected = new BigInt(-1);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_RightOne_Identity_BothNegative()
+        {
+            var num1 = new BigInt(-4802394);
+            var num2 = new BigInt(-1);
+            var expected = new BigInt(4802394);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_BySameValue_One_BothNegative()
+        {
+            var num1 = new BigInt(-4802394);
+            var num2 = new BigInt(-4802394);
+            var expected = new BigInt(1);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        #endregion
+
+        #region Core Division
+
+        [Test]
+        public void Division_SingleDigits_Clean()
+        {
+            var num1 = new BigInt(8);
+            var num2 = new BigInt(2);
+            var expected = new BigInt(4);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_SingleDigits_Remainder()
+        {
+            var num1 = new BigInt(8);
+            var num2 = new BigInt(3);
+            var expected = new BigInt(2);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_DoubleToSingleDigits_NoCarry()
+        {
+            var num1 = new BigInt(84);
+            var num2 = new BigInt(4);
+            var expected = new BigInt(21);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_DoubleToSingleDigits_Carry()
+        {
+            var num1 = new BigInt(84);
+            var num2 = new BigInt(5);
+            var expected = new BigInt(16);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_ManyToSingleDigit()
+        {
+            var num1 = new BigInt(4820938293842);
+            var num2 = new BigInt(7);
+            var expected = new BigInt(688705470548);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_ManyToManyDigits()
+        {
+            var num1 = new BigInt(4283590432812490283);
+            var num2 = new BigInt(7329);
+            var expected = new BigInt(584471337537520);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Division_ManyToManyToSingleDigit_TooBigForLong()
+        {
+            var num1 = new BigInt("329208851874273174104587421089487800626512370");
+            var num2 = new BigInt("47029835982039024872083917298498257232358910");
+            var expected = new BigInt(7);
+            Assert.That(num1 / num2, Is.EqualTo(expected));
+        }
+
+        #endregion
+
+        #endregion
     }
 }

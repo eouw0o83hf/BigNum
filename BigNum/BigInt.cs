@@ -9,9 +9,13 @@ namespace BigNum
     /// </summary>
     public class BigInt : IComparable
     {
+        #region Immutable State
+
         // Little-Endian BCDs
         private readonly byte[] _bytes;
         private readonly bool _negative;
+
+        #endregion
 
         #region In, Out
 
@@ -281,19 +285,27 @@ namespace BigNum
 
         #endregion
 
-        #region Multiplication/Divison
+        #region Multiply/Divide
 
         public BigInt Multiply(BigInt target)
         {
+            return new BigInt(_negative ^ target._negative, _multiplyCore(_bytes, target._bytes));
+        }
+
+        /// <summary>
+        /// Simple unsigned byte-wise multiplication of two byte arrays
+        /// </summary>
+        private static byte[] _multiplyCore(IList<byte> left, IList<byte> right)
+        {
             var bytes = new List<byte>();
 
-            for (var i = 0; i < _bytes.Length; ++i)
+            for (var i = 0; i < left.Count; ++i)
             {
-                for (var j = 0; j < target._bytes.Length; ++j)
+                for (var j = 0; j < right.Count; ++j)
                 {
                     while (bytes.Count < i + j + 1) bytes.Add(0);
 
-                    var product = _bytes[i] * target._bytes[j];
+                    var product = left[i] * right[j];
 
                     for (var k = 0; product > 0; product /= 10, ++k)
                     {
@@ -304,9 +316,128 @@ namespace BigNum
                 }
             }
 
-            while (bytes.Last() == 0) bytes.RemoveAt(bytes.Count);
+            // Remove any leading zeros
+            return bytes
+                .AsEnumerable()
+                .Reverse()
+                .SkipWhile(a => a == 0)
+                .Reverse()
+                .ToArray();
+        }
 
-            return new BigInt(_negative ^ target._negative, bytes.ToArray());
+        public BigInt Divide(BigInt target)
+        {
+            // Here's the tough one. There are two main phases: edge cases and actual division.
+
+            // 1: Handle all of the edge cases
+
+            // Divide by 0
+            if (target.Equals(Zero))
+            {
+                throw new DivideByZeroException();
+            }
+
+            // Denominator > Numerator
+            if (CompareTo(_bytes, target._bytes) < 0)
+            {
+                return Zero;
+            }
+
+            // At this point we need to start caring about signs since
+            // the output will be signed
+            var outputSign = target._negative ? !_negative : _negative;
+
+            // Divide by 1
+            if (target._bytes.SequenceEqual(One._bytes))
+            {
+                return new BigInt(outputSign, _bytes);
+            }
+
+            // Divide by Self
+            if (target._bytes.SequenceEqual(_bytes))
+            {
+                return new BigInt(outputSign, One._bytes);
+            }
+
+            // At this point, the numerator is greater than the denominator and the
+            // denominator is not 0. Since division relies on most-significant figure
+            // first, we'll be working in reverse of the normal procedures.
+            var bigEndianOutputList = new List<byte>();
+
+            // This is going to get modified as we go along - as long division, instead
+            // of trailing down and down, we're doing in-place replacements so that
+            // we just keep pulling out the divided amount every time a quotient component
+            // is determined. This is little-endian like the inputs.
+            var accumulator = _bytes;
+
+            // Since we can only ever have 10 outputs, we can just enumerate them
+            // and then lookup against this mapping instead of re-multiplying every time.
+            // We'll still be doing modifications and comparisons, but this is the
+            // expensive bit.
+            var quotientMemo = Enumerable
+                .Range(0, 10)
+                // Saving this off as an anonymously-typed list so it can be given
+                // a guaranteed, static order
+                .OrderByDescending(a => a)
+                .Select(a => new
+                    {
+                        QuotientComponent = (byte)a,
+                        Value = _multiplyCore(target._bytes, new[] { (byte) a }).DefaultIfEmpty((byte)0).ToArray()
+                    })
+                .ToList();
+
+            // Work our way across the numerator, dividing out components from the
+            // denominator at every digit. There are some initial edge cases that
+            // we could skip with cleverness, but cleverness is not the exercise
+            for (var i = 0; i < _bytes.Length; ++i)
+            {
+                // Run through all of the possible component quotients and
+                // quit as soon as one of them works
+                foreach (var q in quotientMemo)
+                {
+                    // The concept here is to add zeros to the result (which is akin to
+                    // placing the multiplied value in the lefmost position during long
+                    // division on paper) and see if it's less than or equal to the value
+                    // in the accumulator (which is akin to the current bottom-most sub-
+                    // total in long division). If it's not, then the quotient component
+                    // is too high. If it is, then it's our current match and gets applied
+                    var subtractor = Enumerable
+                                        // The offset is awkward here, but this is the number of places
+                                        // between the start of the numerator and the current position
+                                        .Repeat((byte) 0, _bytes.Length - i - 1)
+                                        // Since q.Value is little-endian, adding zeroes first is just
+                                        // power-of-ten left-shifting by that number of places
+                                        .Concat(q.Value)
+                                        // Make it comparable. ToList() is a little better to call
+                                        // than ToArray(), and we only need an IList for the comparison,
+                                        // so we're not doing an array here 
+                                        // Reference: http://stackoverflow.com/questions/1105990/is-it-better-to-call-tolist-or-toarray-in-linq-queries
+                                        .ToList();
+
+                    if (CompareTo(subtractor, accumulator) <= 0)
+                    {
+                        bigEndianOutputList.Add(q.QuotientComponent);
+                        // Make sure to update the accumulator's state by subtracting out
+                        // the value we just arrived at
+                        accumulator = _subtractCore(accumulator, subtractor, false)._bytes;
+                        break;
+                    }
+                }
+            }
+            
+            var finalOutput = bigEndianOutputList
+                                    // Right now it's big-endian, so leading zeros are discarded
+                                    // befor ethe little-endian conversion
+                                .SkipWhile(a => a == 0)
+                                    // If the result is 0, we'll have an empty set. We need an
+                                    // explicit 0 value though, so supply that
+                                .DefaultIfEmpty((byte)0)
+                                    // Switch to little endian for the response
+                                .Reverse()
+                                    // For the response object
+                                .ToArray();
+
+            return new BigInt(outputSign, finalOutput);
         }
 
         #endregion
@@ -347,6 +478,18 @@ namespace BigNum
         {
             return left.Multiply(right);
         }
+
+        public static BigInt operator /(BigInt left, BigInt right)
+        {
+            return left.Divide(right);
+        }
+
+        #endregion
+
+        #region Static References
+
+        public static readonly BigInt Zero = new BigInt(0);
+        public static readonly BigInt One = new BigInt(1);
 
         #endregion
     }
