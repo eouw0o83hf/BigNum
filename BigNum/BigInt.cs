@@ -401,7 +401,18 @@ namespace BigNum
                     // in the accumulator (which is akin to the current bottom-most sub-
                     // total in long division). If it's not, then the quotient component
                     // is too high. If it is, then it's our current match and gets applied
-                    var subtractor = Enumerable.Repeat((byte) 0, _bytes.Length - i - 1).Concat(q.Value).ToArray();
+                    var subtractor = Enumerable
+                                        // The offset is awkward here, but this is the number of places
+                                        // between the start of the numerator and the current position
+                                        .Repeat((byte) 0, _bytes.Length - i - 1)
+                                        // Since q.Value is little-endian, adding zeroes first is just
+                                        // power-of-ten left-shifting by that number of places
+                                        .Concat(q.Value)
+                                        // Make it comparable. ToList() is a little better to call
+                                        // than ToArray(), and we only need an IList for the comparison,
+                                        // so we're not doing an array here 
+                                        // Reference: http://stackoverflow.com/questions/1105990/is-it-better-to-call-tolist-or-toarray-in-linq-queries
+                                        .ToList();
 
                     if (CompareTo(subtractor, accumulator) <= 0)
                     {
