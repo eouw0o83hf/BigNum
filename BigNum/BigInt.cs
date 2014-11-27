@@ -285,7 +285,7 @@ namespace BigNum
 
         #endregion
 
-        #region Multiplication/Divison
+        #region Multiply/Divide
 
         public BigInt Multiply(BigInt target)
         {
@@ -375,14 +375,14 @@ namespace BigNum
             // We'll still be doing modifications and comparisons, but this is the
             // expensive bit.
             var quotientMemo = Enumerable
-                .Range(0, 9)
+                .Range(0, 10)
                 // Saving this off as an anonymously-typed list so it can be given
                 // a guaranteed, static order
                 .OrderByDescending(a => a)
                 .Select(a => new
                     {
                         QuotientComponent = (byte)a,
-                        Value = _multiplyCore(target._bytes, new[] { (byte) a })
+                        Value = _multiplyCore(target._bytes, new[] { (byte) a }).DefaultIfEmpty((byte)0).ToArray()
                     })
                 .ToList();
 
@@ -401,7 +401,7 @@ namespace BigNum
                     // in the accumulator (which is akin to the current bottom-most sub-
                     // total in long division). If it's not, then the quotient component
                     // is too high. If it is, then it's our current match and gets applied
-                    var subtractor = Enumerable.Repeat((byte) 0, _bytes.Length - i - 1).Union(q.Value).ToArray();
+                    var subtractor = Enumerable.Repeat((byte) 0, _bytes.Length - i - 1).Concat(q.Value).ToArray();
 
                     if (CompareTo(subtractor, accumulator) <= 0)
                     {
@@ -475,7 +475,7 @@ namespace BigNum
 
         #endregion
 
-        #region Absolutes
+        #region Static References
 
         public static readonly BigInt Zero = new BigInt(0);
         public static readonly BigInt One = new BigInt(1);
