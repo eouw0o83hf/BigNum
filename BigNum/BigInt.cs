@@ -274,13 +274,17 @@ namespace BigNum
                 accumulator.Add((byte)(difference));
             }
 
-            while (accumulator.Last() == 0 && accumulator.Count > 1)
-            {
-                accumulator.RemoveAt(accumulator.Count - 1);
-            }
+            // Remove the 0s at the end
+            var output = accumulator
+                            .AsEnumerable()
+                            .Reverse()
+                            .SkipWhile(a => a == 0)
+                            .DefaultIfEmpty((byte)0)
+                            .Reverse()
+                            .ToArray();
 
             // Any sign flipping has been handled and we're good to go
-            return new BigInt(outputIsNegative, accumulator.ToArray());
+            return new BigInt(outputIsNegative, output);
         }
 
         #endregion
@@ -299,6 +303,9 @@ namespace BigNum
         {
             var bytes = new List<byte>();
 
+            // Since multiplication is a commutative operation, we just need to
+            // iterate through all possible number pairs and multiply them, then
+            // add them together.
             for (var i = 0; i < left.Count; ++i)
             {
                 for (var j = 0; j < right.Count; ++j)
@@ -307,9 +314,16 @@ namespace BigNum
 
                     var product = left[i] * right[j];
 
+                    // The only trick is that we have to (a) add the product to the
+                    // existing output and (b) place it at the correct location. To
+                    // apply it, we'll add in the least significant digit of the product,
+                    // then whittle it down digit by digit until it's gone
                     for (var k = 0; product > 0; product /= 10, ++k)
                     {
                         while (bytes.Count < i + j + k + 1) bytes.Add(0);
+
+                        // [i + j + k] will end up being the position that we're targeting
+                        // as k works its way toward the more significant digits
                         product += bytes[i + j + k];
                         bytes[i + j + k] = (byte)(product % 10);
                     }
