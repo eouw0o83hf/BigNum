@@ -699,5 +699,92 @@ namespace BigNum.Tests
         #endregion
 
         #endregion
+
+        #region Modulo
+
+        [Test]
+        public void Modulo_EvenDivision()
+        {
+            var num1 = new BigInt(58203942);
+            var num2 = new BigInt(29101971);
+            var expected = new BigInt(0);
+            Assert.That(num1 % num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Modulo_UnevenDivision()
+        {
+            var num1 = new BigInt(5802395423);
+            var num2 = new BigInt(4582);
+            var expected = new BigInt(2633);
+            Assert.That(num1 % num2, Is.EqualTo(expected));
+        }
+
+        #endregion
+
+        #region Operators
+
+        [Test]
+        public void Increment()
+        {
+            var num = new BigInt(48203942);
+            var expected = new BigInt(48203943);
+            ++num;
+            Assert.That(num, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Decrement()
+        {
+            var num = new BigInt(48203942);
+            var expected = new BigInt(48203941);
+            --num;
+            Assert.That(num, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void BitwiseAnd()
+        {
+            var num1 = new BigInt(823);
+            var num2 = new BigInt(71);
+            var expected = new BigInt(21);
+            Assert.That(num1 & num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void BitwiseAnd_2()
+        {
+            var num1 = new BigInt(823);
+            var num2 = new BigInt(971);
+            var expected = new BigInt(821);
+            Assert.That(num1 & num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void BitwiseOr()
+        {
+            var num1 = new BigInt(823);
+            var num2 = new BigInt(71);
+            var expected = new BigInt(873);
+            Assert.That(num1 | num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void LeftShift()
+        {
+            var num = new BigInt(82050013);
+            var expected = new BigInt(82050013 << 3);
+            Assert.That(num << 3, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void RightShift()
+        {
+            var num = new BigInt(82050013);
+            var expected = new BigInt(82050013 >> 3);
+            Assert.That(num >> 3, Is.EqualTo(expected));
+        }
+
+        #endregion
     }
 }

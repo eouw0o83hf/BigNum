@@ -130,10 +130,10 @@ namespace BigNum
                 return -1;
             }
 
-            return CompareTo(_bytes, bigInt._bytes, _negative);
+            return _compareTo(_bytes, bigInt._bytes, _negative);
         }
 
-        private static int CompareTo(IList<byte> left, IList<byte> right, bool isNegative = false)
+        private static int _compareTo(IList<byte> left, IList<byte> right, bool isNegative = false)
         {
             // Third: can we just use the length of the number?
             if (left.Count > right.Count)
@@ -230,7 +230,7 @@ namespace BigNum
         private static BigInt _subtractCore(IList<byte> minuend, IList<byte> subtrahend, bool outputIsNegative)
         {
             // We need to assert that the larger argument is first
-            if(CompareTo(minuend, subtrahend) < 0)
+            if(_compareTo(minuend, subtrahend) < 0)
             {
                 var temp = minuend;
                 minuend = subtrahend;
@@ -274,17 +274,8 @@ namespace BigNum
                 accumulator.Add((byte)(difference));
             }
 
-            // Remove the 0s at the end
-            var output = accumulator
-                            .AsEnumerable()
-                            .Reverse()
-                            .SkipWhile(a => a == 0)
-                            .DefaultIfEmpty((byte)0)
-                            .Reverse()
-                            .ToArray();
-
             // Any sign flipping has been handled and we're good to go
-            return new BigInt(outputIsNegative, output);
+            return new BigInt(outputIsNegative, _trimZeros(accumulator));
         }
 
         #endregion
@@ -341,36 +332,45 @@ namespace BigNum
 
         public BigInt Divide(BigInt target)
         {
+            return _divideCore(this, target).Item1;
+        }
+
+        /// <summary>
+        /// Divides left by right, returning [quotient, remainder]
+        /// </summary>
+        private static Tuple<BigInt, BigInt> _divideCore(BigInt left, BigInt right)
+        {
+
             // Here's the tough one. There are two main phases: edge cases and actual division.
 
             // 1: Handle all of the edge cases
 
             // Divide by 0
-            if (target.Equals(Zero))
+            if (right.Equals(Zero))
             {
                 throw new DivideByZeroException();
             }
 
             // Denominator > Numerator
-            if (CompareTo(_bytes, target._bytes) < 0)
+            if (_compareTo(left._bytes, right._bytes) < 0)
             {
-                return Zero;
+                return new Tuple<BigInt, BigInt>(Zero, left);
             }
 
             // At this point we need to start caring about signs since
             // the output will be signed
-            var outputSign = target._negative ? !_negative : _negative;
+            var outputSign = right._negative ? !left._negative : left._negative;
 
             // Divide by 1
-            if (target._bytes.SequenceEqual(One._bytes))
+            if (right._bytes.SequenceEqual(One._bytes))
             {
-                return new BigInt(outputSign, _bytes);
+                return new Tuple<BigInt, BigInt>(new BigInt(outputSign, left._bytes), Zero);
             }
 
             // Divide by Self
-            if (target._bytes.SequenceEqual(_bytes))
+            if (right._bytes.SequenceEqual(left._bytes))
             {
-                return new BigInt(outputSign, One._bytes);
+                return new Tuple<BigInt, BigInt>(new BigInt(outputSign, One._bytes), Zero);
             }
 
             // At this point, the numerator is greater than the denominator and the
@@ -382,7 +382,7 @@ namespace BigNum
             // of trailing down and down, we're doing in-place replacements so that
             // we just keep pulling out the divided amount every time a quotient component
             // is determined. This is little-endian like the inputs.
-            var accumulator = _bytes;
+            var accumulator = left._bytes;
 
             // Since we can only ever have 10 outputs, we can just enumerate them
             // and then lookup against this mapping instead of re-multiplying every time.
@@ -394,16 +394,16 @@ namespace BigNum
                 // a guaranteed, static order
                 .OrderByDescending(a => a)
                 .Select(a => new
-                    {
-                        QuotientComponent = (byte)a,
-                        Value = _multiplyCore(target._bytes, new[] { (byte) a }).DefaultIfEmpty((byte)0).ToArray()
-                    })
+                {
+                    QuotientComponent = (byte)a,
+                    Value = _multiplyCore(right._bytes, new[] { (byte)a }).DefaultIfEmpty((byte)0).ToArray()
+                })
                 .ToList();
 
             // Work our way across the numerator, dividing out components from the
             // denominator at every digit. There are some initial edge cases that
             // we could skip with cleverness, but cleverness is not the exercise
-            for (var i = 0; i < _bytes.Length; ++i)
+            for (var i = 0; i < left._bytes.Length; ++i)
             {
                 // Run through all of the possible component quotients and
                 // quit as soon as one of them works
@@ -416,19 +416,19 @@ namespace BigNum
                     // total in long division). If it's not, then the quotient component
                     // is too high. If it is, then it's our current match and gets applied
                     var subtractor = Enumerable
-                                        // The offset is awkward here, but this is the number of places
-                                        // between the start of the numerator and the current position
-                                        .Repeat((byte) 0, _bytes.Length - i - 1)
-                                        // Since q.Value is little-endian, adding zeroes first is just
-                                        // power-of-ten left-shifting by that number of places
+                        // The offset is awkward here, but this is the number of places
+                        // between the start of the numerator and the current position
+                                        .Repeat((byte)0, left._bytes.Length - i - 1)
+                        // Since q.Value is little-endian, adding zeroes first is just
+                        // power-of-ten left-shifting by that number of places
                                         .Concat(q.Value)
-                                        // Make it comparable. ToList() is a little better to call
-                                        // than ToArray(), and we only need an IList for the comparison,
-                                        // so we're not doing an array here 
-                                        // Reference: http://stackoverflow.com/questions/1105990/is-it-better-to-call-tolist-or-toarray-in-linq-queries
+                        // Make it comparable. ToList() is a little better to call
+                        // than ToArray(), and we only need an IList for the comparison,
+                        // so we're not doing an array here 
+                        // Reference: http://stackoverflow.com/questions/1105990/is-it-better-to-call-tolist-or-toarray-in-linq-queries
                                         .ToList();
 
-                    if (CompareTo(subtractor, accumulator) <= 0)
+                    if (_compareTo(subtractor, accumulator) <= 0)
                     {
                         bigEndianOutputList.Add(q.QuotientComponent);
                         // Make sure to update the accumulator's state by subtracting out
@@ -438,20 +438,25 @@ namespace BigNum
                     }
                 }
             }
-            
+
             var finalOutput = bigEndianOutputList
-                                    // Right now it's big-endian, so leading zeros are discarded
-                                    // befor ethe little-endian conversion
+                // Right now it's big-endian, so leading zeros are discarded
+                // befor ethe little-endian conversion
                                 .SkipWhile(a => a == 0)
-                                    // If the result is 0, we'll have an empty set. We need an
-                                    // explicit 0 value though, so supply that
+                // If the result is 0, we'll have an empty set. We need an
+                // explicit 0 value though, so supply that
                                 .DefaultIfEmpty((byte)0)
-                                    // Switch to little endian for the response
+                // Switch to little endian for the response
                                 .Reverse()
-                                    // For the response object
+                // For the response object
                                 .ToArray();
 
-            return new BigInt(outputSign, finalOutput);
+            return new Tuple<BigInt, BigInt>(new BigInt(outputSign, finalOutput), new BigInt(outputSign, accumulator));
+        }
+
+        public BigInt Modulus(BigInt target)
+        {
+            return _divideCore(this, target).Item2;
         }
 
         #endregion
@@ -498,12 +503,76 @@ namespace BigNum
             return left.Divide(right);
         }
 
+        public static BigInt operator %(BigInt left, BigInt right)
+        {
+            return left.Modulus(right);
+        }
+
+        public static BigInt operator ++(BigInt target)
+        {
+            return target + One;
+        }
+
+        public static BigInt operator --(BigInt target)
+        {
+            return target - One;
+        }
+
+        public static BigInt operator &(BigInt left, BigInt right)
+        {
+            return _bitwiseCompare(left, right, (a, b) => (byte)(a & b));
+        }
+
+        public static BigInt operator |(BigInt left, BigInt right)
+        {
+            return _bitwiseCompare(left, right, (a, b) => (byte)(a | b));
+        }
+
+        private static BigInt _bitwiseCompare(BigInt left, BigInt right, Func<byte, byte, byte> compare)
+        {
+            var maxIndex = Math.Max(left._bytes.Length, right._bytes.Length);
+            var output = Enumerable.Repeat((byte)0, maxIndex).ToList();
+            for (var i = 0; i < maxIndex; ++i)
+            {
+                output[i] = compare(left._bytes.ElementAtOrDefault(i), right._bytes.ElementAtOrDefault(i));
+            }
+
+            return new BigInt(left._negative, _trimZeros(output));
+        }
+
+        // The shifting operations here aren't particularly elegant, but they get the job done simply
+        public static BigInt operator <<(BigInt left, int right)
+        {
+            var factor = (int)Math.Pow(2, right);
+            return left * new BigInt(factor);
+        }
+
+        public static BigInt operator >>(BigInt left, int right)
+        {
+            var factor = (int)Math.Pow(2, right);
+            return left / new BigInt(factor);
+        }
+
         #endregion
 
         #region Static References
 
         public static readonly BigInt Zero = new BigInt(0);
         public static readonly BigInt One = new BigInt(1);
+
+        #endregion
+
+        #region Helpers
+
+        private static byte[] _trimZeros(IEnumerable<byte> bytes)
+        {
+            return bytes
+                .Reverse()
+                .SkipWhile(a => a == 0)
+                .Reverse()
+                .DefaultIfEmpty((byte) 0)
+                .ToArray();
+        }
 
         #endregion
     }
