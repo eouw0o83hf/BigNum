@@ -699,5 +699,27 @@ namespace BigNum.Tests
         #endregion
 
         #endregion
+
+        #region Modulo
+
+        [Test]
+        public void Modulo_EvenDivision()
+        {
+            var num1 = new BigInt(58203942);
+            var num2 = new BigInt(29101971);
+            var expected = new BigInt(0);
+            Assert.That(num1 % num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Modulo_UnevenDivision()
+        {
+            var num1 = new BigInt(5802395423);
+            var num2 = new BigInt(4582);
+            var expected = new BigInt(2633);
+            Assert.That(num1 % num2, Is.EqualTo(expected));
+        }
+
+        #endregion
     }
 }
