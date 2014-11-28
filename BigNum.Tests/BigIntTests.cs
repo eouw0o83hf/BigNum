@@ -721,5 +721,27 @@ namespace BigNum.Tests
         }
 
         #endregion
+
+        #region Operators
+
+        [Test]
+        public void Increment()
+        {
+            var num = new BigInt(48203942);
+            var expected = new BigInt(48203943);
+            ++num;
+            Assert.That(num, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Decrement()
+        {
+            var num = new BigInt(48203942);
+            var expected = new BigInt(48203941);
+            --num;
+            Assert.That(num, Is.EqualTo(expected));
+        }
+
+        #endregion
     }
 }

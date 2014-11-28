@@ -517,6 +517,16 @@ namespace BigNum
             return left.Modulus(right);
         }
 
+        public static BigInt operator ++(BigInt target)
+        {
+            return target + One;
+        }
+
+        public static BigInt operator --(BigInt target)
+        {
+            return target - One;
+        }
+
         #endregion
 
         #region Static References
