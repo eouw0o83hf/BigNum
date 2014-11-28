@@ -527,12 +527,38 @@ namespace BigNum
             return target - One;
         }
 
+        public static BigInt operator &(BigInt left, BigInt right)
+        {
+            var maxIndex = Math.Max(left._bytes.Length, right._bytes.Length) - 1;
+            var output = Enumerable.Repeat((byte) 0, maxIndex).ToList();
+            for (var i = 0; i < maxIndex; ++i)
+            {
+                output[i] = (byte)(left._bytes.ElementAtOrDefault(i) & right._bytes.ElementAtOrDefault(i));
+            }
+
+            return new BigInt(left._negative, TrimZeros(output));
+        }
+
         #endregion
 
         #region Static References
 
         public static readonly BigInt Zero = new BigInt(0);
         public static readonly BigInt One = new BigInt(1);
+
+        #endregion
+
+        #region Helpers
+
+        private static byte[] TrimZeros(IEnumerable<byte> bytes)
+        {
+            return bytes
+                .Reverse()
+                .SkipWhile(a => a == 0)
+                .Reverse()
+                .DefaultIfEmpty((byte) 0)
+                .ToArray();
+        }
 
         #endregion
     }
