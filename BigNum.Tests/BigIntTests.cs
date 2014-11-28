@@ -769,6 +769,22 @@ namespace BigNum.Tests
             Assert.That(num1 | num2, Is.EqualTo(expected));
         }
 
+        [Test]
+        public void LeftShift()
+        {
+            var num = new BigInt(82050013);
+            var expected = new BigInt(82050013 << 3);
+            Assert.That(num << 3, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void RightShift()
+        {
+            var num = new BigInt(82050013);
+            var expected = new BigInt(82050013 >> 3);
+            Assert.That(num >> 3, Is.EqualTo(expected));
+        }
+
         #endregion
     }
 }

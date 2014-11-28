@@ -540,6 +540,19 @@ namespace BigNum
             return new BigInt(left._negative, _trimZeros(output));
         }
 
+        // The shifting operations here aren't particularly elegant, but they get the job done simply
+        public static BigInt operator <<(BigInt left, int right)
+        {
+            var factor = (int)Math.Pow(2, right);
+            return left * new BigInt(factor);
+        }
+
+        public static BigInt operator >>(BigInt left, int right)
+        {
+            var factor = (int)Math.Pow(2, right);
+            return left / new BigInt(factor);
+        }
+
         #endregion
 
         #region Static References
