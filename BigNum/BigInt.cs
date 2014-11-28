@@ -130,10 +130,10 @@ namespace BigNum
                 return -1;
             }
 
-            return CompareTo(_bytes, bigInt._bytes, _negative);
+            return _compareTo(_bytes, bigInt._bytes, _negative);
         }
 
-        private static int CompareTo(IList<byte> left, IList<byte> right, bool isNegative = false)
+        private static int _compareTo(IList<byte> left, IList<byte> right, bool isNegative = false)
         {
             // Third: can we just use the length of the number?
             if (left.Count > right.Count)
@@ -230,7 +230,7 @@ namespace BigNum
         private static BigInt _subtractCore(IList<byte> minuend, IList<byte> subtrahend, bool outputIsNegative)
         {
             // We need to assert that the larger argument is first
-            if(CompareTo(minuend, subtrahend) < 0)
+            if(_compareTo(minuend, subtrahend) < 0)
             {
                 var temp = minuend;
                 minuend = subtrahend;
@@ -274,17 +274,8 @@ namespace BigNum
                 accumulator.Add((byte)(difference));
             }
 
-            // Remove the 0s at the end
-            var output = accumulator
-                            .AsEnumerable()
-                            .Reverse()
-                            .SkipWhile(a => a == 0)
-                            .DefaultIfEmpty((byte)0)
-                            .Reverse()
-                            .ToArray();
-
             // Any sign flipping has been handled and we're good to go
-            return new BigInt(outputIsNegative, output);
+            return new BigInt(outputIsNegative, _trimZeros(accumulator));
         }
 
         #endregion
@@ -361,7 +352,7 @@ namespace BigNum
             }
 
             // Denominator > Numerator
-            if (CompareTo(left._bytes, right._bytes) < 0)
+            if (_compareTo(left._bytes, right._bytes) < 0)
             {
                 return new Tuple<BigInt, BigInt>(Zero, left);
             }
@@ -437,7 +428,7 @@ namespace BigNum
                         // Reference: http://stackoverflow.com/questions/1105990/is-it-better-to-call-tolist-or-toarray-in-linq-queries
                                         .ToList();
 
-                    if (CompareTo(subtractor, accumulator) <= 0)
+                    if (_compareTo(subtractor, accumulator) <= 0)
                     {
                         bigEndianOutputList.Add(q.QuotientComponent);
                         // Make sure to update the accumulator's state by subtracting out
@@ -529,14 +520,24 @@ namespace BigNum
 
         public static BigInt operator &(BigInt left, BigInt right)
         {
-            var maxIndex = Math.Max(left._bytes.Length, right._bytes.Length) - 1;
-            var output = Enumerable.Repeat((byte) 0, maxIndex).ToList();
+            return _bitwiseCompare(left, right, (a, b) => (byte)(a & b));
+        }
+
+        public static BigInt operator |(BigInt left, BigInt right)
+        {
+            return _bitwiseCompare(left, right, (a, b) => (byte)(a | b));
+        }
+
+        private static BigInt _bitwiseCompare(BigInt left, BigInt right, Func<byte, byte, byte> compare)
+        {
+            var maxIndex = Math.Max(left._bytes.Length, right._bytes.Length);
+            var output = Enumerable.Repeat((byte)0, maxIndex).ToList();
             for (var i = 0; i < maxIndex; ++i)
             {
-                output[i] = (byte)(left._bytes.ElementAtOrDefault(i) & right._bytes.ElementAtOrDefault(i));
+                output[i] = compare(left._bytes.ElementAtOrDefault(i), right._bytes.ElementAtOrDefault(i));
             }
 
-            return new BigInt(left._negative, TrimZeros(output));
+            return new BigInt(left._negative, _trimZeros(output));
         }
 
         #endregion
@@ -550,7 +551,7 @@ namespace BigNum
 
         #region Helpers
 
-        private static byte[] TrimZeros(IEnumerable<byte> bytes)
+        private static byte[] _trimZeros(IEnumerable<byte> bytes)
         {
             return bytes
                 .Reverse()

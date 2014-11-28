@@ -751,6 +751,24 @@ namespace BigNum.Tests
             Assert.That(num1 & num2, Is.EqualTo(expected));
         }
 
+        [Test]
+        public void BitwiseAnd_2()
+        {
+            var num1 = new BigInt(823);
+            var num2 = new BigInt(971);
+            var expected = new BigInt(821);
+            Assert.That(num1 & num2, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void BitwiseOr()
+        {
+            var num1 = new BigInt(823);
+            var num2 = new BigInt(71);
+            var expected = new BigInt(873);
+            Assert.That(num1 | num2, Is.EqualTo(expected));
+        }
+
         #endregion
     }
 }
