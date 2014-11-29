@@ -785,6 +785,29 @@ namespace BigNum.Tests
             Assert.That(num >> 3, Is.EqualTo(expected));
         }
 
+        [Test]
+        public void Negative_Zero()
+        {
+            var target = new BigInt(0);
+            Assert.That(-target, Is.EqualTo(target));
+        }
+
+        [Test]
+        public void Negative_Positive()
+        {
+            var target = new BigInt(4582039);
+            var expected = new BigInt(-4582039);
+            Assert.That(-target, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Negative_Negative()
+        {
+            var target = new BigInt(-4582039);
+            var expected = new BigInt(4582039);
+            Assert.That(-target, Is.EqualTo(expected));
+        }
+
         #endregion
     }
 }

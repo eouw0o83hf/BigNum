@@ -553,6 +553,16 @@ namespace BigNum
             return left / new BigInt(factor);
         }
 
+        public static BigInt operator -(BigInt target)
+        {
+            if (target.Equals(Zero))
+            {
+                return target;
+            }
+
+            return new BigInt(!target._negative, target._bytes);
+        }
+
         #endregion
 
         #region Static References
