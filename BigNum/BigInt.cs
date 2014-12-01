@@ -597,6 +597,11 @@ namespace BigNum
             return root.Power(power);
         }
 
+        public static implicit operator BigInt(int input)
+        {
+            return new BigInt(input);
+        }
+
         #endregion
 
         #region Static References
