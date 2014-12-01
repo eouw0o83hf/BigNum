@@ -483,6 +483,15 @@ namespace BigNum
             for (var i = One; i <= power; ++i)
             {
                 accumulator *= this;
+
+                if (i > 1 && i < power)
+                {
+                    var division = _divideCore(power, i);
+                    if (division.Item2.Equals(Zero))
+                    {
+                        return accumulator.Power(division.Item1);
+                    }
+                }
             }
 
             return accumulator;
