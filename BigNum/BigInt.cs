@@ -484,6 +484,11 @@ namespace BigNum
             {
                 accumulator *= this;
 
+                // Here's an optimizaiton to make raising to large powers an O(log(n)) or something
+                // opreation instead of O(n). It takes advantage of the fact that n^(a*b) = (n^a)^b
+                // The only trick is to determine if the power is a composite number, and if we've
+                // teased out a factor of the power, we can raise the sub-result to the remaining
+                // factor and get an output with far fewer multiplications.
                 if (i > 1 && i < power)
                 {
                     var division = _divideCore(power, i);
