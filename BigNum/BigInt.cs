@@ -461,6 +461,35 @@ namespace BigNum
 
         #endregion
 
+        #region Powers and Roots
+
+        public BigInt Power(BigInt power)
+        {
+            if (power < Zero)
+            {
+                throw new ArgumentException("Don't yet support negative powers", "power");
+            }
+
+            // Exponentiaion to the 0th power is an edge case for negatives
+            if (power.Equals(Zero))
+            {
+                return new BigInt(_negative, One._bytes);
+            }
+
+            // Since the zero case has been taken care of, just start with 1 as the seed
+            // and start multiplying!
+            var accumulator = One;
+
+            for (var i = One; i <= power; ++i)
+            {
+                accumulator *= this;
+            }
+
+            return accumulator;
+        }
+
+        #endregion
+
         #region Operators
 
         public static bool operator <(BigInt left, BigInt right)

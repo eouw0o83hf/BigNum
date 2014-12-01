@@ -809,5 +809,68 @@ namespace BigNum.Tests
         }
 
         #endregion
+
+        #region Powers
+
+        [Test]
+        public void Power_Negative_Errors()
+        {
+            var num1 = new BigInt(4028309);
+            var num2 = new BigInt(-48203);
+            Assert.Throws<ArgumentException>(() => num1.Power(num2));
+        }
+
+        [Test]
+        public void Power_Zero()
+        {
+            var num1 = new BigInt(4023092);
+            var num2 = BigInt.Zero;
+            Assert.That(num1.Power(num2), Is.EqualTo(BigInt.One));
+        }
+
+        [Test]
+        public void Power_One()
+        {
+            var num1 = new BigInt(87);
+            var num2 = BigInt.One;
+            Assert.That(num1.Power(num2), Is.EqualTo(num1));
+        }
+
+        [Test]
+        public void Power_Several()
+        {
+            var num1 = new BigInt(1024);
+            var num2 = new BigInt(10);
+            var expected = new BigInt("1267650600228229401496703205376");
+            Assert.That(num1.Power(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Power_NegativeRoot_Zero()
+        {
+            var num1 = new BigInt(-40283);
+            var expected = new BigInt(-1);
+            Assert.That(num1.Power(BigInt.Zero), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Power_NegativeRoot_OddPower()
+        {
+            var num1 = new BigInt(-40283);
+            var num2 = new BigInt(13);
+            var expected = new BigInt("-735501363992726552838052289693563550800167428251072557221963");
+            Assert.That(num1.Power(num2), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Power_NegativeRoot_EvenPower()
+        {
+            var num1 = new BigInt(-40283);
+            var num2 = new BigInt(130);
+            var expected = new BigInt("46327069036308776076990539775536923394700407633110948561497268002714001174325350583161080707741167185961059511814812781284215402270811865992043364053047211219260193123547149864026134648665122025888556118540213325815255420081782686734389789543084689138735741359702524293314506803769559814195697877933349885468924855686543514653991848950212268395282408570562702994288319796661390954316608715020522318658481713648120619194960230138224704346265805079945935677002363711098660426333797247370011336036112289381466885319594362181538144326836738154527589481367594015098926677068635301792193962258115791477849");
+            Assert.That(num1.Power(num2), Is.EqualTo(expected));
+        }
+
+        #endregion
     }
 }
