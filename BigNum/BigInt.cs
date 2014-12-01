@@ -592,6 +592,11 @@ namespace BigNum
             return new BigInt(!target._negative, target._bytes);
         }
 
+        public static BigInt operator ^(BigInt root, BigInt power)
+        {
+            return root.Power(power);
+        }
+
         #endregion
 
         #region Static References
